@@ -32,7 +32,6 @@ def prepare_url(origine, destination):
     url = f"https://ressources.data.sncf.com/api/records/1.0/search/?rows=2000&dataset=tgvmax&sort=-date&start=0&exclude.od_happy_card=NON"
     url += "&refine.origine=" + origine
     url += "&refine.destination=" + destination
-    print(url)
     return url
 
 async def search_loop(day, origine, destination, minHour, maxHour, channelId):
