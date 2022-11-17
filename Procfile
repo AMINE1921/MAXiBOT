@@ -1,0 +1,1 @@
+worker: python tgv_max.py
