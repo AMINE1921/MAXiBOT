@@ -46,6 +46,18 @@ def main():
     bot = commands.Bot(command_prefix='!', intents=intents)
 
     @bot.command()
+    async def infos(ctx):
+        embed = discord.Embed(title="Guide d'utilisation !",
+                              description="Ce bot permet de rechercher des trains TGV Max", color=0x00ff00)
+        embed.add_field(
+            name="Format:", value="!maxi [le jour de la semaine] [la ville de départ] [la ville d'arrivé] [heure de départ minimum] [heure de départ maximum]", inline=False)
+        embed.add_field(
+            name="Exemple:", value="!maxi mardi REIMS PARIS 07:00 10:00")
+        embed.set_footer(text="Veuillez respecter la forme du message pour activer le Bot !",
+                         icon_url="https://upload.wikimedia.org/wikipedia/commons/thumb/4/46/Logo_SNCF_2011.svg/1024px-Logo_SNCF_2011.svg.png")
+        await ctx.send(embed=embed)
+
+    @bot.command()
     async def maxi(ctx, *args, given_name=None):
         channelId = ctx.channel.id
         listDays = ["lundi", "mardi", "mercredi",
