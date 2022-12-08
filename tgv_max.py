@@ -4,6 +4,7 @@ from datetime import datetime, timedelta
 import requests
 import discord
 import asyncio
+import json
 import os
 
 async def search_train(data, channelId, taskId):
@@ -11,16 +12,15 @@ async def search_train(data, channelId, taskId):
     for i in range(0, nb_train):
         try:
             departureDateTime = data[i]["departureDateTime"].split("T")
-            print(departureDateTime)
             date = departureDateTime[0]
             hour = departureDateTime[1]
             origine = data[i]["originName"]
             destination = data[i]["destinationName"]
             f = open("sncf.txt", "a+")
             f.seek(0)
-            if (data[i]["availableSeatsCount"] != 0 and data[i] not in f.read()):
+            if (data[i]["availableSeatsCount"] != 0 and json.dumps(data[i]) not in f.read()):
                 print(f'{origine} vers {destination} : {date} à {hour}')
-                f.write(data[i] + "\n")
+                f.write(json.dumps(data[i]) + "\n")
                 channel = bot.get_channel(channelId)
                 await channel.send(f'\U0001F684 \U0001F3E0 {origine} vers \U000027A1 {destination} : \U0001F4C5 {date} à {hour}')
             f.close()
