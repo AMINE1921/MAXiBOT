@@ -1,11 +1,20 @@
 from dotenv import load_dotenv, find_dotenv
 from discord.ext import commands
 from datetime import datetime, timedelta
-import requests
+import aiohttp
 import discord
 import asyncio
 import json
 import os
+
+class Bot(commands.Bot):
+    async def async_cleanup(self):
+        channel = bot.get_channel(1042387439706185828)
+        await channel.send(f':anger: Bot is offline :face_with_spiral_eyes:')
+
+    async def close(self):
+        await self.async_cleanup()
+        await super().close()
 
 async def search_train(data, channelId, taskId):
     nb_train = len(data)
@@ -22,7 +31,7 @@ async def search_train(data, channelId, taskId):
                 print(f'{origine} vers {destination} : {date} à {hour}')
                 f.write(json.dumps(data[i]) + "\n")
                 channel = bot.get_channel(channelId)
-                await channel.send(f'\U0001F684 \U0001F3E0 {origine} vers \U000027A1 {destination} : \U0001F4C5 {date} à {hour}')
+                await channel.send(f':bullettrain_side: :house: {origine} vers :arrow_right: {destination} : :date: {date} à {hour}')
             f.close()
         except Exception as e:
             print(e)
@@ -35,8 +44,11 @@ async def search_train(data, channelId, taskId):
 
 async def get_train(date, origine, destination, minHour, maxHour, channelId, taskId):
     url = prepare_url(date, origine, destination, minHour, maxHour)
-    response = requests.get(url)
-    await search_train(response.json(), channelId, taskId)
+    async with aiohttp.ClientSession() as session:
+        async with session.get(url) as r:
+            if r.status == 200:
+                js = await r.json()
+                await search_train(js, channelId, taskId)
 
 def prepare_url(date, origine, destination, minHour, maxHour):
     url = f"https://sncf-simulateur-api-prod.azurewebsites.net/api/RailAvailability/Search"
@@ -67,7 +79,7 @@ def main():
     global current_tasks
     intents = discord.Intents.default()
     intents.message_content = True
-    bot = commands.Bot(command_prefix='!', intents=intents)
+    bot = Bot(command_prefix='!', intents=intents)
     listDays = ["lundi", "mardi", "mercredi",
     "jeudi", "vendredi", "samedi", "dimanche"]
     current_tasks = []
