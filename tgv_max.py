@@ -16,20 +16,20 @@ class Bot(commands.Bot):
         await self.async_cleanup()
         await super().close()
 
-async def search_train(data, channelId, taskId):
-    nb_train = len(data)
+async def search_train(data, minHour, maxHour, channelId, taskId):
+    nb_train = len(data["proposals"])
     for i in range(0, nb_train):
         try:
-            departureDateTime = data[i]["departureDateTime"].split("T")
+            departureDateTime = data["proposals"][i]["departureDate"].split("T")
             date = departureDateTime[0]
             hour = departureDateTime[1]
-            origine = data[i]["originName"]
-            destination = data[i]["destinationName"]
+            origine = data["proposals"][i]["origin"]["label"]
+            destination = data["proposals"][i]["destination"]["label"]
             f = open("sncf.txt", "a+")
             f.seek(0)
-            if (data[i]["availableSeatsCount"] != 0 and json.dumps(data[i]) not in f.read()):
+            if (minHour <= hour and hour <= maxHour and json.dumps(data["proposals"][i]) not in f.read()):
                 print(f'{origine} vers {destination} : {date} à {hour}')
-                f.write(json.dumps(data[i]) + "\n")
+                f.write(json.dumps(data["proposals"][i]) + "\n")
                 channel = bot.get_channel(channelId)
                 await channel.send(f':bullettrain_side: :house: {origine} vers :arrow_right: {destination} : :date: {date} à {hour}')
             f.close()
@@ -43,20 +43,13 @@ async def search_train(data, channelId, taskId):
             break
 
 async def get_train(date, origine, destination, minHour, maxHour, channelId, taskId):
-    url = prepare_url(date, origine, destination, minHour, maxHour)
+    data = {'departureDateTime': date + "T00:00:00", 'destination': destination, 'origin': origine}
+    url = "https://www.maxjeune-tgvinoui.sncf/api/public/refdata/search-freeplaces-proposals"
     async with aiohttp.ClientSession() as session:
-        async with session.get(url) as r:
+        async with session.post(url, json=data) as r:
             if r.status == 200:
                 js = await r.json()
-                await search_train(js, channelId, taskId)
-
-def prepare_url(date, origine, destination, minHour, maxHour):
-    url = f"https://sncf-simulateur-api-prod.azurewebsites.net/api/RailAvailability/Search"
-    url += "/" + origine
-    url += "/" + destination
-    url += "/" + date + "T" + minHour + ":00"
-    url += "/" + date + "T" + maxHour + ":00"
-    return url
+                await search_train(js, minHour, maxHour, channelId, taskId)
 
 async def search_loop(day, origine, destination, minHour, maxHour, channelId, taskId):
     while True:
@@ -64,11 +57,9 @@ async def search_loop(day, origine, destination, minHour, maxHour, channelId, ta
         for i in range(1,31):
             date = (current_date + timedelta(days=i)).strftime("%Y-%m-%d")
             if (datetime.strptime(date, '%Y-%m-%d').weekday() == day):
-                if (origine == "REIMS"):
-                    await get_train(date, "REIMS", destination, minHour, maxHour, channelId, taskId)
-                elif (destination == "REIMS"):
-                    await get_train(date, origine, "REIMS", minHour, maxHour, channelId, taskId)
-                    await get_train(date, origine, "CHAMPAGNE-ARDENNE", minHour, maxHour, channelId, taskId)
+                if (destination == "FRRHE"):
+                    await get_train(date, origine, "FRRHE", minHour, maxHour, channelId, taskId)
+                    await get_train(date, origine, "FREAH", minHour, maxHour, channelId, taskId)
                 else:
                     await get_train(date, origine, destination, minHour, maxHour, channelId, taskId)
         await asyncio.sleep(120)
@@ -100,8 +91,8 @@ def main():
     async def maxi(ctx, *args, given_name=None):
         channelId = ctx.channel.id
         day = listDays.index(args[0].lower())
-        origine = "PARIS%20(intramuros)" if args[1] == "PARIS" else args[1]
-        destination = "PARIS%20(intramuros)" if args[2] == "PARIS" else args[2]
+        origine = args[1]
+        destination = args[2]
         minHour = args[3]
         maxHour = args[4]
 
