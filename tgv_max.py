@@ -76,64 +76,63 @@ def main():
     current_tasks = []
 
     @bot.command()
-    async def infos(ctx):
-        embed = discord.Embed(title="Guide d'utilisation !",
-                              description="Ce bot permet de rechercher des trains TGV Max", color=0x00ff00)
-        embed.add_field(
-            name="Format:", value="!maxi [le jour de la semaine] [la ville de départ] [la ville d'arrivé] [heure de départ minimum] [heure de départ maximum]", inline=False)
-        embed.add_field(
-            name="Exemple:", value="!maxi mardi REIMS PARIS 07:00 10:00")
-        embed.set_footer(text="Veuillez respecter la forme du message pour activer le Bot !",
-                         icon_url="https://upload.wikimedia.org/wikipedia/commons/thumb/4/46/Logo_SNCF_2011.svg/1024px-Logo_SNCF_2011.svg.png")
-        await ctx.send(embed=embed)
-
-    @bot.command()
     async def maxi(ctx, *args, given_name=None):
-        channelId = ctx.channel.id
-        day = listDays.index(args[0].lower())
-        origine = args[1]
-        destination = args[2]
-        minHour = args[3]
-        maxHour = args[4]
+        command = args[0]
 
-        try:
-            taskId = len(current_tasks)
-            task = bot.loop.create_task(search_loop(day, origine, destination, minHour, maxHour, channelId, taskId))
-            current_tasks.append({"task": task, "day": day, "origine": origine, "destination": destination, "minHour": minHour, "maxHour": maxHour})
-        except Exception as e:
-            print(e)
-            await ctx.send("Une erreur est survenue")
-
-    @bot.command()
-    async def stop(ctx, *args):
-        if len(args) == 0:
-            if (len(current_tasks)>0):
-                tasks = ""
-                for index, task in enumerate(current_tasks):
-                    tasks += f'{index}: {listDays[int(task["day"])]} {task["origine"]} {task["destination"]} {task["minHour"]} {task["maxHour"]}\n'
-            else:
-                tasks = "Aucune recherche n'est lancée"
-            embed = discord.Embed(title="Guide d'utilisation pour arrêter une recherche !",
-                              description="Pour arrêter une recherche il faut suivre l'exemple ci-dessous", color=0x00ff00)
-            embed.add_field(
-                name="Tâches actuelles:", value=tasks, inline=False)
-            embed.add_field(
-            name="Exemple:", value="!stop 0")
-            embed.set_footer(text="Veuillez respecter la forme du message pour activer le Bot !",
-                            icon_url="https://upload.wikimedia.org/wikipedia/commons/thumb/4/46/Logo_SNCF_2011.svg/1024px-Logo_SNCF_2011.svg.png")
-            await ctx.send(embed=embed)
-        else:
-            if (len(current_tasks)>0):
+        match command:
+            case "start":
                 try:
-                    index = int(args[0])
-                    current_tasks[index]["task"].cancel()
-                    current_tasks.pop(index)
-                    await ctx.send("La recherche a bien été arreté")
+                    channelId = ctx.channel.id
+                    day = listDays.index(args[1].lower())
+                    origine = args[2]
+                    destination = args[3]
+                    minHour = args[4]
+                    maxHour = args[5]
+                    taskId = len(current_tasks)
+                    task = bot.loop.create_task(search_loop(day, origine, destination, minHour, maxHour, channelId, taskId))
+                    current_tasks.append({"task": task, "day": day, "origine": origine, "destination": destination, "minHour": minHour, "maxHour": maxHour})
                 except Exception as e:
                     print(e)
                     await ctx.send("Une erreur est survenue")
-            else: 
-                await ctx.send("Aucune recherche n'est lancée")
+            case "info":
+                embed = discord.Embed(title="Guide d'utilisation !",
+                              description="Ce bot permet de rechercher des trains TGV Max", color=0x00ff00)
+                embed.add_field(
+                    name="Format:", value="!maxi start [le jour de la semaine] [le code de la station de la ville de départ] [le code de la station de la ville d'arrivé] [heure de départ minimum] [heure de départ maximum]", inline=False)
+                embed.add_field(
+                    name="Exemple:", value="!maxi start mardi FRPST FRRHE 07:00 10:00")
+                embed.set_footer(text="Veuillez respecter la forme du message pour activer le Bot !",
+                                icon_url="https://upload.wikimedia.org/wikipedia/commons/thumb/4/46/Logo_SNCF_2011.svg/1024px-Logo_SNCF_2011.svg.png")
+                await ctx.send(embed=embed)
+            case "stop":
+                if len(args) == 1:
+                    if (len(current_tasks)>0):
+                        tasks = ""
+                        for index, task in enumerate(current_tasks):
+                            tasks += f'{index}: {listDays[int(task["day"])]} {task["origine"]} {task["destination"]} {task["minHour"]} {task["maxHour"]}\n'
+                    else:
+                        tasks = "Aucune recherche n'est lancée"
+                    embed = discord.Embed(title="Guide d'utilisation pour arrêter une recherche !",
+                                    description="Pour arrêter une recherche il faut suivre l'exemple ci-dessous", color=0x00ff00)
+                    embed.add_field(
+                        name="Tâches actuelles:", value=tasks, inline=False)
+                    embed.add_field(
+                    name="Exemple:", value="!maxi stop 0")
+                    embed.set_footer(text="Veuillez respecter la forme du message pour activer le Bot !",
+                                    icon_url="https://upload.wikimedia.org/wikipedia/commons/thumb/4/46/Logo_SNCF_2011.svg/1024px-Logo_SNCF_2011.svg.png")
+                    await ctx.send(embed=embed)
+                else:
+                    if (len(current_tasks)>0):
+                        try:
+                            index = int(args[1])
+                            current_tasks[index]["task"].cancel()
+                            current_tasks.pop(index)
+                            await ctx.send("La recherche a bien été arreté")
+                        except Exception as e:
+                            print(e)
+                            await ctx.send("Une erreur est survenue")
+                    else: 
+                        await ctx.send("Aucune recherche n'est lancée")
 
     bot.run(os.environ.get("BOT_KEY")) 
 
