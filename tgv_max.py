@@ -106,12 +106,16 @@ def main():
     current_tasks = []
 
     @bot.command()
-    async def maxi(ctx, *args, given_name=None):
+    async def maxiDev(ctx, *args, given_name=None):
         command = args[0]
 
         match command:
             case "start":
                 try:
+                    with open('stationsList.json', 'r') as f:
+                        dataStations = json.load(f)
+                    allCodesStations = list(
+                        set(station['codeStation'] for station in dataStations['stations']))
                     channelId = ctx.channel.id
                     day = listDays.index(args[1].lower())
                     origine = args[2]
@@ -119,10 +123,13 @@ def main():
                     minHour = args[4]
                     maxHour = args[5]
                     taskId = len(current_tasks)
-                    task = bot.loop.create_task(search_loop(
-                        day, origine, destination, minHour, maxHour, channelId, taskId))
-                    current_tasks.append({"task": task, "day": day, "origine": origine,
-                                         "destination": destination, "minHour": minHour, "maxHour": maxHour})
+                    if origine in allCodesStations and destination in allCodesStations:
+                        task = bot.loop.create_task(search_loop(
+                            day, origine, destination, minHour, maxHour, channelId, taskId))
+                        current_tasks.append({"task": task, "day": day, "origine": origine,
+                                              "destination": destination, "minHour": minHour, "maxHour": maxHour})
+                    else:
+                        await ctx.send("Les codes stations ne sont pas corrects !")
                 except Exception as e:
                     print(e)
                     await ctx.send("Une erreur est survenue")
@@ -154,8 +161,14 @@ def main():
                 if len(args) == 1:
                     if (len(current_tasks) > 0):
                         tasks = ""
+                        with open('stationsList.json', 'r') as f:
+                            dataStations = json.load(f)
                         for index, task in enumerate(current_tasks):
-                            tasks += f'{index}: {listDays[int(task["day"])]} {task["origine"]} {task["destination"]} {task["minHour"]} {task["maxHour"]}\n'
+                            stationOrigine = next(
+                                (item for item in dataStations["stations"] if item["codeStation"] == task["origine"]), None)
+                            stationDestination = next(
+                                (item for item in dataStations["stations"] if item["codeStation"] == task["destination"]), None)
+                            tasks += f'{index}: {listDays[int(task["day"])]} {stationOrigine["station"]} {stationDestination["station"]} {task["minHour"]} {task["maxHour"]}\n'
                     else:
                         tasks = "Aucune recherche n'est lancée"
                     embed = discord.Embed(title="Guide d'utilisation pour arrêter une recherche !",
@@ -179,6 +192,8 @@ def main():
                             await ctx.send("Une erreur est survenue")
                     else:
                         await ctx.send("Aucune recherche n'est lancée")
+            case _:
+                await ctx.send("Cette commande n'existe pas !")
 
     bot.run(os.environ.get("BOT_KEY"))
 
