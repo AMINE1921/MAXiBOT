@@ -11,7 +11,7 @@ import os
 class Bot(commands.Bot):
     async def async_cleanup(self):
         channel = bot.get_channel(1042387439706185828)
-        await channel.send(f':anger: Bot is offline :face_with_spiral_eyes:')
+        await channel.send(":anger: Bot is offline :face_with_spiral_eyes:")
 
     async def close(self):
         await self.async_cleanup()
@@ -80,7 +80,7 @@ async def serach_station(name, channelId):
             if r.status == 200:
                 response = await r.json()
                 if not response["stations"]:
-                    await channel.send(f':x: Aucune station trouvée')
+                    await channel.send(":x: Aucune station trouvée")
                 if response["stations"]:
                     listStations = ""
                     for index, station in enumerate(response["stations"][:10]):
@@ -106,7 +106,7 @@ def main():
     current_tasks = []
 
     @bot.command()
-    async def maxiDev(ctx, *args, given_name=None):
+    async def maxi(ctx, *args, given_name=None):
         command = args[0]
 
         match command:
