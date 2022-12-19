@@ -30,9 +30,10 @@ async def search_train(data, minHour, maxHour, channelId, taskId):
             destination = data["proposals"][i]["destination"]["label"]
             f = open("sncf.txt", "a+")
             f.seek(0)
-            if (minHour <= hour and hour <= maxHour and json.dumps(data["proposals"][i]) not in f.read()):
+            if (minHour <= hour and hour <= maxHour and json.dumps(data["proposals"][i], sort_keys=True) not in f.read()):
                 print(f'{origine} vers {destination} : {date} à {hour}')
-                f.write(json.dumps(data["proposals"][i]) + "\n")
+                f.write(json.dumps(data["proposals"]
+                        [i], sort_keys=True) + "\n")
                 channel = bot.get_channel(channelId)
                 await channel.send(f':bullettrain_side: :house: {origine} vers :arrow_right: {destination} : :date: {date} à {hour}')
             f.close()
