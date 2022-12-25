@@ -22,21 +22,37 @@ async def search_train(data, minHour, maxHour, channelId, taskId):
     nb_train = len(data["proposals"])
     for i in range(0, nb_train):
         try:
-            departureDateTime = data["proposals"][i]["departureDate"].split(
-                "T")
-            date = departureDateTime[0]
-            hour = departureDateTime[1]
-            origine = data["proposals"][i]["origin"]["label"]
-            destination = data["proposals"][i]["destination"]["label"]
-            f = open("sncf.txt", "a+")
-            f.seek(0)
-            if (minHour <= hour and hour <= maxHour and json.dumps(data["proposals"][i], sort_keys=True) not in f.read()):
-                print(f'{origine} vers {destination} : {date} à {hour}')
-                f.write(json.dumps(data["proposals"]
-                        [i], sort_keys=True) + "\n")
-                channel = bot.get_channel(channelId)
-                await channel.send(f':bullettrain_side: :house: {origine} vers :arrow_right: {destination} : :date: {date} à {hour}')
-            f.close()
+            if 'proposals' in data:
+                for i in range(len(data['proposals'])):
+                    if 'departureDate' in data['proposals'][i]:
+                        departureDateTime = data['proposals'][i]['departureDate'].split(
+                            'T')
+                        date = departureDateTime[0]
+                        hour = departureDateTime[1]
+                        if 'origin' in data['proposals'][i] and 'destination' in data['proposals'][i]:
+                            origine = data['proposals'][i]['origin']['label']
+                            destination = data['proposals'][i]['destination']['label']
+                            route = {
+                                'date': date,
+                                'hour': hour,
+                                'origine': origine,
+                                'destination': destination,
+                                "channelId": channelId,
+                            }
+                            try:
+                                with open('logs.json', 'x') as f:
+                                    json.dump([], f)
+                            except FileExistsError:
+                                with open('logs.json', 'r') as f:
+                                    logsData = json.load(f)
+                            if minHour <= hour <= maxHour and route not in logsData:
+                                print(
+                                    f'{origine} vers {destination} : {date} à {hour}')
+                                logsData.append(route)
+                                with open('logs.json', 'w') as f:
+                                    json.dump(logsData, f)
+                                channel = bot.get_channel(channelId)
+                                await channel.send(f':bullettrain_side: :house: {origine} vers :arrow_right: {destination} : :date: {date} à {hour}')
         except Exception as e:
             print(e)
             channel = bot.get_channel(channelId)
@@ -118,6 +134,7 @@ def main():
                     allCodesStations = list(
                         set(station['codeStation'] for station in dataStations['stations']))
                     channelId = ctx.channel.id
+                    userId = ctx.message.author.id
                     day = listDays.index(args[1].lower())
                     origine = args[2]
                     destination = args[3]
