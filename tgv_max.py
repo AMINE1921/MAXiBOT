@@ -188,7 +188,7 @@ def main():
                                 (item for item in dataStations["stations"] if item["codeStation"] == task["origine"]), None)
                             stationDestination = next(
                                 (item for item in dataStations["stations"] if item["codeStation"] == task["destination"]), None)
-                            tasks += f'{index}: {listDays[int(task["day"])]} {stationOrigine["station"]} :arrow_right: {stationDestination["station"]} :timer: {task["minHour"]} {task["maxHour"]}\n'
+                            tasks += f'{index}: :date: {listDays[int(task["day"])]} :house: {stationOrigine["station"]} :arrow_right: {stationDestination["station"]} :timer: {task["minHour"]} {task["maxHour"]}\n'
                     else:
                         tasks = "Aucune recherche n'est lancée"
                     embed = discord.Embed(title="Guide d'utilisation pour arrêter une recherche !",
