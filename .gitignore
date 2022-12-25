@@ -129,4 +129,4 @@ dmypy.json
 .pyre/
 
 # log travels
-sncf.txt
+logs.json
