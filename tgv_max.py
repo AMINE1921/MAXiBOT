@@ -23,48 +23,43 @@ class Bot(commands.Bot):
 
 
 async def search_train(data, minHour, maxHour, channelId, taskId):
-    nb_train = len(data["proposals"])
-    for i in range(0, nb_train):
-        try:
-            if 'proposals' in data:
-                for i in range(len(data['proposals'])):
-                    if 'departureDate' in data['proposals'][i]:
-                        departureDateTime = data['proposals'][i]['departureDate'].split(
-                            'T')
-                        date = departureDateTime[0]
-                        hour = departureDateTime[1]
-                        if 'origin' in data['proposals'][i] and 'destination' in data['proposals'][i]:
-                            origine = data['proposals'][i]['origin']['label']
-                            destination = data['proposals'][i]['destination']['label']
-                            route = {
-                                'date': date,
-                                'hour': hour,
-                                'origine': origine,
-                                'destination': destination,
-                                "channelId": channelId,
-                            }
-                            try:
-                                with open('logs.json', 'x') as f:
-                                    json.dump([], f)
-                            except FileExistsError:
-                                with open('logs.json', 'r') as f:
-                                    logsData = json.load(f)
-                            if minHour <= hour <= maxHour and route not in logsData:
-                                print(
-                                    f'{origine} vers {destination} : {date} à {hour}')
-                                logsData.append(route)
-                                with open('logs.json', 'w') as f:
-                                    json.dump(logsData, f)
-                                channel = bot.get_channel(channelId)
-                                await channel.send(f':bullettrain_side: :house: {origine} :arrow_right: {destination} : :date: {date} à {hour}')
-        except Exception as e:
-            print(e)
-            channel = bot.get_channel(channelId)
-            await channel.send(f'Une erreur est survenue: {e}')
-            index = int(taskId)
-            current_tasks[index]["task"].cancel()
-            current_tasks.pop(index)
-            break
+    if 'proposals' in data:
+        for i in range(len(data['proposals'])):
+            try:
+                departureDateTime = data['proposals'][i]['departureDate'].split(
+                    'T')
+                date = departureDateTime[0]
+                hour = departureDateTime[1]
+                origine = data['proposals'][i]['origin']['label']
+                destination = data['proposals'][i]['destination']['label']
+                route = {
+                    'date': date,
+                    'hour': hour,
+                    'origine': origine,
+                    'destination': destination,
+                    "channelId": channelId,
+                }
+                if (os.path.exists("logs.json") == False):
+                    with open('logs.json', 'x') as f:
+                        json.dump([], f)
+                with open('logs.json', 'r') as f:
+                    logsData = json.load(f)
+                if minHour <= hour <= maxHour and route not in logsData:
+                    print(
+                        f'{origine} vers {destination} : {date} à {hour}')
+                    logsData.append(route)
+                    with open('logs.json', 'w') as f:
+                        json.dump(logsData, f)
+                    channel = bot.get_channel(channelId)
+                    await channel.send(f':bullettrain_side: :house: {origine} :arrow_right: {destination} : :date: {date} à {hour}')
+            except Exception as e:
+                print(e)
+                channel = bot.get_channel(channelId)
+                await channel.send(f'Une erreur est survenue: {e}')
+                index = int(taskId)
+                current_tasks[index]["task"].cancel()
+                current_tasks.pop(index)
+                break
 
 
 async def get_train(date, origine, destination, minHour, maxHour, channelId, taskId):
@@ -220,7 +215,7 @@ def main():
                 case _:
                     await ctx.send("Cette commande n'existe pas !")
         else:
-            await ctx.send("Vous n'êtes pas membré dans notre patron ! \n https://www.patreon.com/maxibot")
+            await ctx.send("Vous n'êtes pas membre dans notre patreon ! \n https://www.patreon.com/maxibot")
 
     bot.run(os.environ.get("BOT_KEY"))
 
