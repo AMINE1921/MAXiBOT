@@ -107,7 +107,7 @@ async def serach_station(name, channelId):
                     embed.add_field(
                         name="Liste: ", value=listStations, inline=False)
                     embed.set_footer(text="MAXiBOT",
-                                     icon_url="https://upload.wikimedia.org/wikipedia/commons/thumb/4/46/Logo_SNCF_2011.svg/1024px-Logo_SNCF_2011.svg.png")
+                                     icon_url="https://i.imgur.com/hnjxCJ1.png")
                     await channel.send(embed=embed)
 
 
@@ -158,8 +158,10 @@ def main():
                     name="Format:", value="!maxi start [le jour de la semaine] [le code de la station de la ville de départ] [le code de la station de la ville d'arrivé] [heure de départ minimum] [heure de départ maximum]", inline=False)
                 embed.add_field(
                     name="Exemple:", value="!maxi start mardi FRPST FRRHE 07:00 10:00")
+                embed.add_field(
+                    name="Autres commandes:", value="!maxi station [nom de la station]\n !maxi stop", inline=False)
                 embed.set_footer(text="Veuillez respecter la forme du message pour activer le Bot !",
-                                 icon_url="https://upload.wikimedia.org/wikipedia/commons/thumb/4/46/Logo_SNCF_2011.svg/1024px-Logo_SNCF_2011.svg.png")
+                                 icon_url="https://i.imgur.com/hnjxCJ1.png")
                 await ctx.send(embed=embed)
             case "station":
                 try:
@@ -196,7 +198,7 @@ def main():
                     embed.add_field(
                         name="Exemple:", value="!maxi stop 0")
                     embed.set_footer(text="Veuillez respecter la forme du message pour activer le Bot !",
-                                     icon_url="https://upload.wikimedia.org/wikipedia/commons/thumb/4/46/Logo_SNCF_2011.svg/1024px-Logo_SNCF_2011.svg.png")
+                                     icon_url="https://i.imgur.com/hnjxCJ1.png")
                     await ctx.send(embed=embed)
                 else:
                     if (len(current_tasks) > 0):
