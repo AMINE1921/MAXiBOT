@@ -52,7 +52,7 @@ async def search_train(data, minHour, maxHour, channelId, taskId):
                                 with open('logs.json', 'w') as f:
                                     json.dump(logsData, f)
                                 channel = bot.get_channel(channelId)
-                                await channel.send(f':bullettrain_side: :house: {origine} vers :arrow_right: {destination} : :date: {date} à {hour}')
+                                await channel.send(f':bullettrain_side: :house: {origine} :arrow_right: {destination} : :date: {date} à {hour}')
         except Exception as e:
             print(e)
             channel = bot.get_channel(channelId)
