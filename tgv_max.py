@@ -10,12 +10,16 @@ import os
 
 class Bot(commands.Bot):
     async def async_cleanup(self):
-        channel = bot.get_channel(1042387439706185828)
+        channel = bot.get_channel(1056632494411231272)
         await channel.send(":anger: Le bot est hors ligne :face_with_spiral_eyes:")
 
     async def close(self):
         await self.async_cleanup()
         await super().close()
+        
+    async def on_ready(self):
+        channel = bot.get_channel(1056632494411231272)
+        await channel.send(":anger: Le bot est maintenant prêt à être utilisé :fire:")
 
 
 async def search_train(data, minHour, maxHour, channelId, taskId):
