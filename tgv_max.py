@@ -3,6 +3,7 @@ from discord.ext import commands
 from datetime import datetime, timedelta
 import aiohttp
 import discord
+import patreon
 import asyncio
 import json
 import os
@@ -16,7 +17,7 @@ class Bot(commands.Bot):
     async def close(self):
         await self.async_cleanup()
         await super().close()
-        
+
     async def on_ready(self):
         channel = bot.get_channel(1056632494411231272)
         await channel.send(":anger: Le bot est maintenant prêt à être utilisé :fire:")
@@ -110,6 +111,39 @@ async def serach_station(name, channelId):
                     await channel.send(embed=embed)
 
 
+async def is_premium(userId):
+    access_token = os.environ.get("CREATOR_ACCESS_TOKEN")
+    api_client = patreon.API(access_token)
+    campaign_response = api_client.fetch_campaign()
+    campaign_id = campaign_response.data()[0].id()
+    jsonapi_doc = api_client.fetch_page_of_pledges(campaign_id, 100)
+    discord_ids = []
+    while True:
+        json_data = jsonapi_doc.json_data
+        users = [entity for entity in json_data['included']
+                 if 'type' in entity
+                 and entity['type'] == 'user']
+        discord_ids = [user['attributes']['social_connections']['discord']['user_id'] for user in users
+                       if user['attributes']['social_connections']['discord'] is not None]
+        json_data = jsonapi_doc.json_data
+        if 'next' in json_data['links']:
+            jsonapi_doc.links.next = jsonapi_doc.links.next.encode(
+                'ascii', 'ignore')
+            cursor = api_client.extract_cursor(jsonapi_doc)
+            jsonapi_doc = api_client.fetch_page_of_pledges(
+                campaign_id, 100, cursor).json_data
+        else:
+            break
+    return str(userId) in discord_ids
+
+
+def user_id_exists_in_current_tasks(user_id):
+    for task in current_tasks:
+        if task['userId'] == user_id:
+            return True
+    return False
+
+
 def main():
     load_dotenv(find_dotenv())
     global bot
@@ -126,7 +160,7 @@ def main():
         command = args[0]
         userId = ctx.message.author.id
 
-        if userId == 493410965644247055 or userId == 494033803463884802:
+        if userId == 493410965644247055 or userId == 494033803463884802 or await is_premium(userId):
             match command:
                 case "start":
                     try:
@@ -145,7 +179,7 @@ def main():
                             task = bot.loop.create_task(search_loop(
                                 day, origine, destination, minHour, maxHour, channelId, taskId))
                             current_tasks.append({"task": task, "day": day, "origine": origine,
-                                                  "destination": destination, "minHour": minHour, "maxHour": maxHour})
+                                                  "destination": destination, "minHour": minHour, "maxHour": maxHour, "userId": userId})
                         else:
                             await ctx.send("Les codes stations ne sont pas corrects !")
                     except Exception as e:
@@ -179,7 +213,7 @@ def main():
                         await ctx.send("Une erreur est survenue")
                 case "stop":
                     if len(args) == 1:
-                        if (len(current_tasks) > 0):
+                        if (len(current_tasks) > 0 and user_id_exists_in_current_tasks(userId)):
                             tasks = ""
                             with open('stationsList.json', 'r') as f:
                                 dataStations = json.load(f)
@@ -188,7 +222,8 @@ def main():
                                     (item for item in dataStations["stations"] if item["codeStation"] == task["origine"]), None)
                                 stationDestination = next(
                                     (item for item in dataStations["stations"] if item["codeStation"] == task["destination"]), None)
-                                tasks += f'{index}: :date: {listDays[int(task["day"])]} :house: {stationOrigine["station"]} :arrow_right: {stationDestination["station"]} :timer: {task["minHour"]} {task["maxHour"]}\n'
+                                if userId == task["userId"]:
+                                    tasks += f'{index}: :date: {listDays[int(task["day"])]} :house: {stationOrigine["station"]} :arrow_right: {stationDestination["station"]} :timer: {task["minHour"]} {task["maxHour"]}\n'
                         else:
                             tasks = "Aucune recherche n'est lancée"
                         embed = discord.Embed(title="Guide d'utilisation pour arrêter une recherche !",
