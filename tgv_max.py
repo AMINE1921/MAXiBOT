@@ -172,7 +172,7 @@ def main():
                             task = bot.loop.create_task(search_loop(
                                 day, origine, destination, minHour, maxHour, channelId, taskId))
                             current_tasks.append({"task": task, "day": day, "origine": origine,
-                                                  "destination": destination, "minHour": minHour, "maxHour": maxHour})
+                                                  "destination": destination, "minHour": minHour, "maxHour": maxHour, "userId": userId})
                         else:
                             await ctx.send("Les codes stations ne sont pas corrects !")
                     except Exception as e:
@@ -215,7 +215,8 @@ def main():
                                     (item for item in dataStations["stations"] if item["codeStation"] == task["origine"]), None)
                                 stationDestination = next(
                                     (item for item in dataStations["stations"] if item["codeStation"] == task["destination"]), None)
-                                tasks += f'{index}: :date: {listDays[int(task["day"])]} :house: {stationOrigine["station"]} :arrow_right: {stationDestination["station"]} :timer: {task["minHour"]} {task["maxHour"]}\n'
+                                if userId == task["userId"]:
+                                    tasks += f'{index}: :date: {listDays[int(task["day"])]} :house: {stationOrigine["station"]} :arrow_right: {stationDestination["station"]} :timer: {task["minHour"]} {task["maxHour"]}\n'
                         else:
                             tasks = "Aucune recherche n'est lancée"
                         embed = discord.Embed(title="Guide d'utilisation pour arrêter une recherche !",
