@@ -137,6 +137,13 @@ async def is_premium(userId):
     return str(userId) in discord_ids
 
 
+def user_id_exists_in_current_tasks(user_id):
+    for task in current_tasks:
+        if task['userId'] == user_id:
+            return True
+    return False
+
+
 def main():
     load_dotenv(find_dotenv())
     global bot
@@ -206,7 +213,7 @@ def main():
                         await ctx.send("Une erreur est survenue")
                 case "stop":
                     if len(args) == 1:
-                        if (len(current_tasks) > 0):
+                        if (len(current_tasks) > 0 and user_id_exists_in_current_tasks(userId)):
                             tasks = ""
                             with open('stationsList.json', 'r') as f:
                                 dataStations = json.load(f)
