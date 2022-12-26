@@ -3,6 +3,7 @@ from discord.ext import commands
 from datetime import datetime, timedelta
 import aiohttp
 import discord
+import patreon
 import asyncio
 import json
 import os
@@ -16,7 +17,7 @@ class Bot(commands.Bot):
     async def close(self):
         await self.async_cleanup()
         await super().close()
-        
+
     async def on_ready(self):
         channel = bot.get_channel(1056632494411231272)
         await channel.send(":anger: Le bot est maintenant prêt à être utilisé :fire:")
@@ -110,6 +111,32 @@ async def serach_station(name, channelId):
                     await channel.send(embed=embed)
 
 
+async def is_premium(userId):
+    access_token = os.environ.get("CREATOR_ACCESS_TOKEN")
+    api_client = patreon.API(access_token)
+    campaign_response = api_client.fetch_campaign()
+    campaign_id = campaign_response.data()[0].id()
+    jsonapi_doc = api_client.fetch_page_of_pledges(campaign_id, 100)
+    discord_ids = []
+    while True:
+        json_data = jsonapi_doc.json_data
+        users = [entity for entity in json_data['included']
+                 if 'type' in entity
+                 and entity['type'] == 'user']
+        discord_ids = [user['attributes']['social_connections']['discord']['user_id'] for user in users
+                       if user['attributes']['social_connections']['discord'] is not None]
+        json_data = jsonapi_doc.json_data
+        if 'next' in json_data['links']:
+            jsonapi_doc.links.next = jsonapi_doc.links.next.encode(
+                'ascii', 'ignore')
+            cursor = api_client.extract_cursor(jsonapi_doc)
+            jsonapi_doc = api_client.fetch_page_of_pledges(
+                campaign_id, 100, cursor).json_data
+        else:
+            break
+    return str(userId) in discord_ids
+
+
 def main():
     load_dotenv(find_dotenv())
     global bot
@@ -126,7 +153,7 @@ def main():
         command = args[0]
         userId = ctx.message.author.id
 
-        if userId == 493410965644247055 or userId == 494033803463884802:
+        if userId == 493410965644247055 or userId == 494033803463884802 or await is_premium(userId):
             match command:
                 case "start":
                     try:
